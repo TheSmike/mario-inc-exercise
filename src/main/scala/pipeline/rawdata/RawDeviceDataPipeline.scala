@@ -15,6 +15,7 @@ object RawDeviceDataPipeline extends SparkApp[RawDeviceDataContext] {
 
     val filtered = csv
       .filter(csv("received") === context.receivedDate)
+
     filtered
       .write
       .format("delta")

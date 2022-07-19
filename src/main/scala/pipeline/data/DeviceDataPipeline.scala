@@ -3,26 +3,27 @@ package pipeline.data
 
 import utils.spark.SparkApp
 
-import org.apache.spark.sql.functions.{date_add, datediff, to_date}
-import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
+import org.apache.spark.sql.functions.{datediff, to_date, to_timestamp}
+import org.apache.spark.sql._
 
 object DeviceDataPipeline extends SparkApp[DeviceDataContext] {
 
   override def init(args: Array[String]): DeviceDataContext = new DeviceDataContext(args)
 
   override def run(session: SparkSession, context: DeviceDataContext): Unit = {
-    val bronze = session.read.format("delta").table(context.rawDataTableName)
-    logger.debug("schema is ==> " + bronze.schema)
+    val rawData = session.read.format("delta").table(context.rawDataTableName)
+    logger.debug("schema is ==> " + rawData.schema)
 
-    val filtered = cleanData(context.receivedDate, bronze)
+    val filtered = cleanData(context.receivedDate, rawData)
 
-    filtered
+    val projected = projectData(filtered)
+
+    projected
       .write
       .format("delta")
-      .partitionBy("received")
       .mode(SaveMode.Overwrite)
-      .option("replaceWhere", s"received = '${context.receivedDate}'")
-      .save(context.outputPath)
+      .option("replaceWhere", s"received_date = '${context.receivedDate}'")
+      .saveAsTable(context.dataTableName)
 
   }
 
@@ -30,8 +31,20 @@ object DeviceDataPipeline extends SparkApp[DeviceDataContext] {
   def cleanData(receivedDate: String, bronze: DataFrame) = {
     bronze
       .filter(bronze("received") === receivedDate)
-      .filter(datediff(bronze("received"), to_date(bronze("timestamp"))) <= 1) //TODO is it useful to save the number of discarded records?
+      .filter(datediff(bronze("received"), to_date(bronze("timestamp"))) <= 1) //TODO Could it be useful to save the number of discarded records?
       .dropDuplicates("device", "timestamp")
   }
+
+  def projectData(filtered: Dataset[Row]) = {
+
+    filtered
+      .withColumnRenamed("received", "received_date")
+      .withColumn("event_timestamp", to_timestamp(filtered("timestamp"), "y-M-d'T'H:m:s.SSSX" ))
+      .drop("timestamp")
+      .select("received_date", "event_timestamp", "device", "CO2_level", "humidity", "temperature")
+    //TODO column names should be saved somewhere (as constants in their respective data models for example)
+  }
+
+
 }
 

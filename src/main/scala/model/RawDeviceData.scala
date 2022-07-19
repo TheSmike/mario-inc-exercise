@@ -1,7 +1,7 @@
 package it.scarpenti.marioinc
 package model
 
-case class RawData(
+case class RawDeviceData(
                     CO2_level: Long,
                     device: String,
                     humidity: Long,

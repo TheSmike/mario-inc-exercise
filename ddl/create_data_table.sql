@@ -1,11 +1,12 @@
-CREATE TABLE IF NOT EXISTS mario.raw_device_data (
-  received DATE,
+CREATE TABLE IF NOT EXISTS mario.device_data (
+  received_date DATE,
+  event_timestamp TIMESTAMP,
   device STRING,
-  timestamp STRING,
-  CO2_level INTEGER,
-  humidity INTEGER,
-  temperature INTEGER
+  CO2_level BIGINT,
+  humidity BIGINT,
+  temperature BIGINT,
+  event_date DATE GENERATED ALWAYS AS (CAST(event_timestamp AS DATE)),
 )
 USING DELTA
-  PARTITIONED BY (received)
+  PARTITIONED BY (event_date)
 LOCATION '/Users/mscarpenti/data/mario/device_data/'

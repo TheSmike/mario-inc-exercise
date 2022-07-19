@@ -1,8 +1,10 @@
 package it.scarpenti.marioinc
 package utils.spark
 
-import org.apache.log4j.Logger
+import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql.SparkSession
+
+import java.util.TimeZone
 
 
 abstract class SparkApp[Context] {
@@ -35,11 +37,25 @@ abstract class SparkApp[Context] {
 
   //TODO: Parametrize session and its AppName
   val session =
-    SparkSession.builder()
+    createSession
+
+  private def createSession = {
+    Logger.getLogger("org").setLevel(Level.WARN)
+    Logger.getLogger("it.scarpenti").setLevel(Level.DEBUG)
+    val session = SparkSession.builder()
       .master("local[1]")
       .appName("Mario Inc. Assignment")
       .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
       .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
       .enableHiveSupport()
       .getOrCreate()
+
+    //FIXME (improve me): This setting is necessary due to a problem with the generated column of the device_data table,
+    // we can alternatively use the right conversion function (with formatting string) in the generated column.
+    // (in fact I think it's even better)
+    session.conf.set("spark.sql.session.timeZone", "UTC")
+    TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
+
+    session
+  }
 }
