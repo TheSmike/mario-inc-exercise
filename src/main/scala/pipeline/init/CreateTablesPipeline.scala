@@ -5,7 +5,7 @@ import utils.spark.SparkApp
 
 import org.apache.spark.sql.SparkSession
 
-import scala.io.Source
+import scala.io.{BufferedSource, Source}
 
 object CreateTablesPipeline extends SparkApp[CreateTablesContext] {
 
@@ -18,15 +18,17 @@ object CreateTablesPipeline extends SparkApp[CreateTablesContext] {
     // be parametrized.
 
     session.sql(readQuery("create_database"))
-    session.sql(readQuery("create_info_table"))
+    //session.sql(readQuery("create_info_table"))
     session.sql(readQuery("create_raw_data_table"))
-    //session.sql(readQuery("create_data_table"))
+    session.sql(readQuery("create_data_table"))
     //session.sql(readQuery("create_report_table"))
   }
 
   private def readQuery(fileName: String) = {
-    //TODO fixme or delete me 
-    Source.fromFile(s"ddl/$fileName.sql").getLines.mkString
+    val source: BufferedSource = Source.fromFile(s"ddl/$fileName.sql")
+    val sql = source.getLines.mkString(sep = "\n")
+    source.close()
+    sql
   }
 
 }

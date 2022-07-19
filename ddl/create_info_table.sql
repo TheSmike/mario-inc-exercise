@@ -5,4 +5,4 @@ CREATE TABLE IF NOT EXISTS mario.device_info (
   customer STRING
 )
 USING DELTA
-LOCATION 'target/tmp/mario/device_info/'
+LOCATION '/Users/mscarpenti/data/mario/device_info/'
