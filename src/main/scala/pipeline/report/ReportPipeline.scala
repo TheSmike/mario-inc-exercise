@@ -16,17 +16,20 @@ object ReportPipeline extends SparkApp[ReportContext] {
     val info = session.read.format("delta").table(context.infoTableName)
       .withColumnRenamed("code", "device")
 
-    val yearMonth = context.eventDate.substring(0, 4) + context.eventDate.substring(5, 7)
-    logger.info(s"yearMonth is $yearMonth")
+    val filtered = cleansedData
+      .filter(date_format(col("event_date"), "yyyyMM").between(
+        context.yearMonthFrom,
+        context.yearMonthTo)
+      )  //TODO verify if this filter is pushed down to partition, if not a better partition strategy would be (year, month, day)
 
-    val joined = cleansedData.join(info, "device")
+    val joined = filtered.join(info, "device")
     val grouped = groupByMonthAndArea(joined)
 
     grouped
       .write
       .format("delta")
       .mode(SaveMode.Overwrite)
-      .option("replaceWhere", s"year_month = '$yearMonth'")
+      .option("replaceWhere", s"year_month between '${context.yearMonthFrom}' and  '${context.yearMonthTo}'")
       .saveAsTable(context.reportTableName)
 
   }

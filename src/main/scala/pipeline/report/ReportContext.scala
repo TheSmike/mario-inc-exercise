@@ -18,9 +18,9 @@ class ReportContext(config: Config, args: Array[String]) {
   val reportTableName = config.getString(s"$prefix.full-table-name")
   val infoTableName = config.getString("device-info.full-table-name")
 
-  val eventDate = args(0) //TODO introduce something better to parse args (and to validate them)
-  //TODO: A possible improvement consist into handle a range of dates also, to easily (re)compute a lot of months
-
+  val yearMonthFrom = args(0)
+  val yearMonthTo = args(1)
+  //TODO introduce something better to parse args (and to validate them)
 
 }
 
