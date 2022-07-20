@@ -15,7 +15,6 @@ class DeviceInfoContext(config: Config, args: Array[String]) {
   config.checkValid(ConfigFactory.defaultReference(), prefix)
 
   val appName = config.getString(s"$prefix.name")
-  val processingDate = config.getInt(s"$prefix.processing-date")
   val inputPath = config.getString(s"$prefix.input-path")
   val outputPath = config.getString(s"$prefix.output-path")
 

@@ -25,6 +25,7 @@ object CreateTablesPipeline extends SparkApp[CreateTablesContext] {
     session.sql(readQuery("create_database"))
     session.sql(readQuery("create_info_table"))
     session.sql(readQuery("create_raw_data_table"))
+    session.sql(readQuery("create_report_table"))
 
     createDataTable(context)
     //session.sql(readQuery("create_report_table"))
@@ -52,7 +53,7 @@ object CreateTablesPipeline extends SparkApp[CreateTablesContext] {
           .dataType(DateType)
           .generatedAlwaysAs("CAST(event_timestamp AS DATE)")
           .build())
-      .partitionedBy("event_date")
+      .partitionedBy("event_date", "device")
       .location(context.dataPath)
       .execute()
   }

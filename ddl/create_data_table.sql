@@ -8,5 +8,5 @@ CREATE TABLE IF NOT EXISTS mario.device_data (
   event_date DATE GENERATED ALWAYS AS (CAST(event_timestamp AS DATE)),
 )
 USING DELTA
-  PARTITIONED BY (event_date)
+  PARTITIONED BY (event_date, device)
 LOCATION '/Users/mscarpenti/data/mario/device_data/'
