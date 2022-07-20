@@ -2,10 +2,9 @@ package it.scarpenti.marioinc
 package pipeline.report
 
 
-import com.holdenkarau.spark.testing.DataFrameSuiteBase
 import org.scalatest.funsuite.AnyFunSuite
 
-class ReportPipelineSuite extends AnyFunSuite with DataFrameSuiteBase {
+class ReportPipelineSuite extends AnyFunSuite {
 
   test("groupByMonthAndArea should aggregate records"){
 
