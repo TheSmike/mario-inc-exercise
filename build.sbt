@@ -8,7 +8,6 @@ lazy val root = (project in file("."))
   .settings(
     name := "mario-inc-exercise",
     idePackagePrefix := Some("it.scarpenti.marioinc"),
-    releaseIgnoreUntrackedFiles := true
   )
 
 libraryDependencies ++= Seq(
