@@ -24,3 +24,7 @@ jobs:
         cache: 'sbt'
     - name: Run tests
       run: sbt test
+    - name: release
+      run: sbt release
+      if: github.event_name == 'push' and github.ref = 'master'
+      
