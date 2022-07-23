@@ -5,8 +5,8 @@ import com.typesafe.config.{Config, ConfigFactory}
 
 class ConfigReader(config: Config) {
 
-  def this() {
-    this(ConfigFactory.load())
+  def this(profile: String) {
+    this(ConfigFactory.load(s"application-$profile"))
   }
 
   final private val infoPrefix = "device-info"

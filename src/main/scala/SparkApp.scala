@@ -11,13 +11,16 @@ import java.util.TimeZone
 
 abstract class SparkApp[Context <: AbstractContext](implicit ev: Manifest[Context]) {
 
-  val config: AppConfig = new ConfigReader().read()
   val logger: Logger = Logger.getLogger(this.getClass)
   val session: SparkSession = createSession
+
+  lazy val config: AppConfig = new ConfigReader(profile).read()
+  private var profile: String = null
 
   def main(implicit args: Array[String]): Unit = {
     val context = init()
     parseArgs(args, context)
+    profile = context.profile
 
     logger.info("Start SparkApp...")
 
