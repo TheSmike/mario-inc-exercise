@@ -1,47 +1,52 @@
 package it.scarpenti.marioinc
 package utils.spark
 
+import config.{AppConfig, ConfigReader}
+
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql.SparkSession
+import org.backuity.clist.Cli
 
 import java.util.TimeZone
 
 
-abstract class SparkApp[Context] {
+abstract class SparkApp[Context <: AbstractContext](implicit ev: Manifest[Context]) {
 
-  val logger = Logger.getLogger(this.getClass)
+  val config: AppConfig = new ConfigReader().read()
+  val logger: Logger = Logger.getLogger(this.getClass)
+  val session: SparkSession = createSession
 
-  def logContext(context: Context): Unit = {
-    logger.info("Context is composed by:")
-    for (v <- context.getClass.getDeclaredFields) {
-      v.setAccessible(true)
-      logger.info("Field: " + v.getName() + " => " + v.get(context))
+  def main(implicit args: Array[String]): Unit = {
+    val context = init()
+    parseArgs(args, context)
+
+    logger.info("Start SparkApp...")
+
+    logger.info(s"input args are: ${args.toList}")
+    logger.info(s"Configs are: $config")
+
+    logger.info("START PIPELINE " + this.getClass.getSimpleName)
+    run(context)
+
+    logger.info("END SparkApp")
+  }
+
+  def init(): Context
+
+  def run(context: Context) : Unit
+
+
+  //private methods
+
+  private def parseArgs(args: Array[String], context: Context) = {
+    Cli.parse(args).withCommand(context) { config =>
+      println(config.description)
     }
   }
 
-  def main(implicit args: Array[String]): Unit = {
-    logger.info("INIT CONTEXT")
-    logger.info(s"input args are: ${args.toList}")
-    val context = init(args)
-    logContext(context)
-
-    logger.info("START PIPELINE " + this.getClass.getSimpleName)
-    run(session, context)
-    logger.info("END PIPELINE")
-  }
-
-  def init(args: Array[String]): Context
-
-  def run(session: SparkSession, context: Context)
-
-
   //TODO: Parametrize session and its AppName
-  val session =
-    createSession
-
   private def createSession = {
-    Logger.getLogger("org").setLevel(Level.WARN)
-    Logger.getLogger("it.scarpenti").setLevel(Level.DEBUG)
+
     val session = SparkSession.builder()
       .master("local[1]")
       .appName("Mario Inc. Assignment")
@@ -50,6 +55,7 @@ abstract class SparkApp[Context] {
       .enableHiveSupport()
       .getOrCreate()
 
+    setLog()
     //FIXME (improve me): This setting is necessary due to a problem with the generated column of the device_data table,
     // we can alternatively use the right conversion function (with formatting string) in the generated column.
     // (in fact I think it's even better)
@@ -57,5 +63,11 @@ abstract class SparkApp[Context] {
     TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
 
     session
+  }
+
+  //TODO These settings should be moved into a log4j config files
+  private def setLog(): Unit = {
+    Logger.getLogger("org").setLevel(Level.WARN)
+    Logger.getLogger("it.scarpenti").setLevel(Level.DEBUG)
   }
 }

@@ -18,6 +18,8 @@ libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "3.2.12" % "test",
   "org.scalacheck" %% "scalacheck" % "1.16.0" % "test",
   "com.typesafe" % "config" % "1.4.2",
+  "org.backuity.clist" %% "clist-core"   % "3.5.1",
+  "org.backuity.clist" %% "clist-macros" % "3.5.1" % "provided",
   "org.apache.logging.log4j" %% "log4j-api-scala" % "12.0",
   "org.apache.logging.log4j" % "log4j-core" % "2.17.2" % Runtime,
   "com.holdenkarau" %% "spark-testing-base" % "3.2.1_1.2.0" % Test,

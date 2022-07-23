@@ -8,10 +8,10 @@ import org.apache.spark.sql.functions.{avg, col, date_format}
 
 object ReportPipeline extends SparkApp[ReportContext] {
 
-  override def init(args: Array[String]): ReportContext = new ReportContext(args)
+  override def init(): ReportContext = new ReportContext()
 
 
-  override def run(session: SparkSession, context: ReportContext): Unit = {
+  override def run(context: ReportContext): Unit = {
     val cleansedData = session.read.format("delta").table(context.dataTableName)
     val info = session.read.format("delta").table(context.infoTableName)
       .withColumnRenamed("code", "device")
@@ -34,7 +34,7 @@ object ReportPipeline extends SparkApp[ReportContext] {
 
   }
 
-  def groupByMonthAndArea(joined: DataFrame) = {
+  def groupByMonthAndArea(joined: DataFrame): DataFrame = {
     joined
       .groupBy(
         date_format(col("event_date"), "yyyyMM").alias("year_month"),

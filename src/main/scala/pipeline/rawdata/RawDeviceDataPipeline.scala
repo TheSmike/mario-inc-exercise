@@ -7,9 +7,9 @@ import org.apache.spark.sql.{SaveMode, SparkSession}
 
 object RawDeviceDataPipeline extends SparkApp[RawDeviceDataContext] {
 
-  override def init(args: Array[String]): RawDeviceDataContext = new RawDeviceDataContext(args)
+  override def init(): RawDeviceDataContext = new RawDeviceDataContext()
 
-  override def run(session: SparkSession, context: RawDeviceDataContext): Unit = {
+  override def run(context: RawDeviceDataContext): Unit = {
     val csv = session.read.json(context.inputPath)
     logger.debug("schema is ==> " + csv.schema)
 

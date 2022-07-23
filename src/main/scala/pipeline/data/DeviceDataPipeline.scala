@@ -8,9 +8,9 @@ import org.apache.spark.sql._
 
 object DeviceDataPipeline extends SparkApp[DeviceDataContext] {
 
-  override def init(args: Array[String]): DeviceDataContext = new DeviceDataContext(args)
+  override def init(): DeviceDataContext = new DeviceDataContext()
 
-  override def run(session: SparkSession, context: DeviceDataContext): Unit = {
+  override def run(context: DeviceDataContext): Unit = {
     val rawData = session.read.format("delta").table(context.rawDataTableName)
     logger.debug("schema is ==> " + rawData.schema)
 
@@ -28,14 +28,14 @@ object DeviceDataPipeline extends SparkApp[DeviceDataContext] {
   }
 
   //TODO we can refactor this method again to move the first filter to another place, this could help us isolate tests more
-  def cleanData(receivedDate: String, bronze: DataFrame) = {
+  def cleanData(receivedDate: String, bronze: DataFrame): Dataset[Row] = {
     bronze
       .filter(bronze("received") === receivedDate)
       .filter(datediff(bronze("received"), to_date(bronze("timestamp"))) <= 1) //TODO Could it be useful to save the number of discarded records?
       .dropDuplicates("device", "timestamp")
   }
 
-  def projectData(filtered: Dataset[Row]) = {
+  def projectData(filtered: Dataset[Row]): DataFrame = {
 
     filtered
       .withColumnRenamed("received", "received_date")

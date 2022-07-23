@@ -1,13 +1,12 @@
 package it.scarpenti.marioinc
 package pipeline.init
 
+import model.{Device, Info, RawDevice, Report}
 import utils.spark.SparkApp
 
 import io.delta.tables.DeltaTable
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.types.DateType
-
-import scala.io.{BufferedSource, Source}
+import org.apache.spark.sql.types._
 
 /**
  * This pipeline is used to create data tables in the data catalog the first time.
@@ -18,44 +17,85 @@ import scala.io.{BufferedSource, Source}
  */
 object CreateTablesPipeline extends SparkApp[CreateTablesContext] {
 
-  override def init(args: Array[String]): CreateTablesContext = new CreateTablesContext(args)
+  override def init(): CreateTablesContext = new CreateTablesContext()
 
-  override def run(session: SparkSession, context: CreateTablesContext): Unit = {
-
-    session.sql(readQuery("create_database"))
-    session.sql(readQuery("create_info_table"))
-    session.sql(readQuery("create_raw_data_table"))
-    session.sql(readQuery("create_report_table"))
-
-    createDataTable(context)
-    //session.sql(readQuery("create_report_table"))
-  }
-  private def readQuery(fileName: String) = {
-    val source: BufferedSource = Source.fromFile(s"ddl/$fileName.sql")
-    val sql = source.getLines.mkString(sep = "\n")
-    source.close()
-    sql
+  override def run(context: CreateTablesContext): Unit = {
+    createDatabase(session)
+    createInfoTable(context.force)
+    createRawDataTable(context.force)
+    createDataTable(context.force)
+    createReportTable(context.force)
   }
 
-  def createDataTable(context: CreateTablesContext): Unit = {
 
-    DeltaTable.createIfNotExists(session)
-      .tableName(context.dataTableName)
-      //TODO add comments if there is no other data catalog
-      .addColumn("received_date", "DATE")
-      .addColumn("event_timestamp", "TIMESTAMP")
-      .addColumn("device", "STRING")
-      .addColumn("CO2_level", "BIGINT")
-      .addColumn("humidity", "BIGINT")
-      .addColumn("temperature","BIGINT")
-      .addColumn(
-        DeltaTable.columnBuilder("event_date")
-          .dataType(DateType)
-          .generatedAlwaysAs("CAST(event_timestamp AS DATE)")
-          .build())
-      .partitionedBy("event_date", "device")
-      .location(context.dataPath)
+  private def createDatabase(session: SparkSession) = {
+    session.sql(s"CREATE DATABASE IF NOT EXISTS mario LOCATION '${config.databasePath}' ")
+  }
+
+  private def createInfoTable(force: Boolean) = {
+    createTableBuilder(force)
+      .tableName(config.infoTableName)
+      .addColumn(Info.CODE, StringType)
+      .addColumn(Info.TYPE, StringType)
+      .addColumn(Info.AREA, StringType)
+      .addColumn(Info.CUSTOMER, StringType)
+      .location(config.infoOutputPath)
       .execute()
+  }
+
+  private def createRawDataTable(force: Boolean) = {
+    createTableBuilder(force)
+      .tableName(config.rawDataTableName)
+      .addColumn(RawDevice.RECEIVED, DateType)
+      .addColumn(RawDevice.DEVICE, StringType)
+      .addColumn(RawDevice.TIMESTAMP, TimestampType)
+      .addColumn(RawDevice.CO2_LEVEL, LongType)
+      .addColumn(RawDevice.HUMIDITY, LongType)
+      .addColumn(RawDevice.TEMPERATURE, LongType)
+      .addColumn(
+        DeltaTable.columnBuilder(RawDevice.EVENT_DATE)
+          .dataType(DateType)
+          .generatedAlwaysAs(s"CAST(${RawDevice.TIMESTAMP} AS DATE)")
+          .build())
+      .partitionedBy(RawDevice.EVENT_DATE)
+      .location(config.rawOutputPath)
+      .execute()
+  }
+
+  private def createDataTable(force: Boolean): Unit = {
+    createTableBuilder(force)
+      .tableName(config.dataTableName)
+      .addColumn(Device.RECEIVED_DATE, DateType)
+      .addColumn(Device.EVENT_TIMESTAMP, TimestampType)
+      .addColumn(Device.DEVICE, StringType)
+      .addColumn(Device.CO2_LEVEL, LongType)
+      .addColumn(Device.HUMIDITY, LongType)
+      .addColumn(Device.TEMPERATURE, LongType)
+      .addColumn(
+        DeltaTable.columnBuilder(Device.EVENT_DATE)
+          .dataType(DateType)
+          .generatedAlwaysAs(s"CAST(${Device.EVENT_TIMESTAMP} AS DATE)")
+          .build())
+      .partitionedBy(Device.EVENT_DATE, Device.DEVICE)
+      .location(config.dataOutputPath)
+      .execute()
+  }
+
+  private def createReportTable(force: Boolean): Unit = {
+    createTableBuilder(force)
+      .tableName(config.reportTableName)
+      .addColumn(Report.YEAR_MONTH, IntegerType)
+      .addColumn(Report.AREA, StringType)
+      .addColumn(Report.CO2_LEVEL_AVG, DoubleType)
+      .addColumn(Report.HUMIDITY_AVG, DoubleType)
+      .addColumn(Report.TEMPERATURE_AVG, DoubleType)
+      .location(config.reportOutputPath)
+      .execute()
+  }
+
+  private def createTableBuilder(force: Boolean) = {
+    if (force) DeltaTable.createOrReplace(session)
+    else DeltaTable.createIfNotExists(session)
   }
 
 }

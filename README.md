@@ -41,3 +41,15 @@ s3://path-to-jar/mario-inc-exercise2.12-0.1.0.jar 2021-04-01
 For the sake of brevity I don't report the other run commands. 
 
 
+## Some personal notes on the exercise
+
+I'm used to generating a class for each step of the pipeline: read, write and transformation steps. I simply encapsulate
+each part into a method in the corresponding class for this exercise because it could seem a bit overkill for the purpose
+of this test.
+
+I'm used to adding comments to the columns when I create tables (I didn't do it for this exercise).
+
+[//]: # (TODO Notes on gitflow? )
+
+
+
