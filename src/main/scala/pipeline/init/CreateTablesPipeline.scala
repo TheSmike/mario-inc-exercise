@@ -2,7 +2,6 @@ package it.scarpenti.marioinc
 package pipeline.init
 
 import model.{Device, Info, RawDevice, Report}
-import utils.spark.SparkApp
 
 import io.delta.tables.DeltaTable
 import org.apache.spark.sql.SparkSession

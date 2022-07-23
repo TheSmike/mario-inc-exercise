@@ -2,7 +2,6 @@ package it.scarpenti.marioinc
 package model
 
 import java.sql.Timestamp
-import java.time.ZonedDateTime
 import java.util.Date
 
 case class Device(

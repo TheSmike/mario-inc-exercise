@@ -1,5 +1,4 @@
 package it.scarpenti.marioinc
-package utils.spark
 
 import config.{AppConfig, ConfigReader}
 
@@ -33,10 +32,8 @@ abstract class SparkApp[Context <: AbstractContext](implicit ev: Manifest[Contex
 
   def init(): Context
 
-  def run(context: Context) : Unit
+  def run(context: Context): Unit
 
-
-  //private methods
 
   private def parseArgs(args: Array[String], context: Context) = {
     Cli.parse(args).withCommand(context) { config =>

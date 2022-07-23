@@ -1,14 +1,11 @@
 package it.scarpenti.marioinc
 package pipeline.info
 
-import utils.spark.SparkApp
-
-import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 
 object DeviceInfoPipeline extends SparkApp[DeviceInfoContext] {
 
-  override def init(): DeviceInfoContext = DeviceInfoContext()
+  override def init(): DeviceInfoContext = new DeviceInfoContext()
 
   override def run(context: DeviceInfoContext): Unit = {
     val csv = readInfoDataFromLandingZone(session)

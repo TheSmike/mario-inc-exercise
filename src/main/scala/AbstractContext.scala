@@ -1,5 +1,4 @@
 package it.scarpenti.marioinc
-package utils.spark
 
 import org.backuity.clist.{Command, arg, opt}
 

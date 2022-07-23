@@ -1,8 +1,6 @@
 package it.scarpenti.marioinc
 package model
 
-import org.apache.spark.sql.types.{DateType, LongType, StringType}
-
 case class RawDevice(
                       CO2_level: Long,
                       device: String,
