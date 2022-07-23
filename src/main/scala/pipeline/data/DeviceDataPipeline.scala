@@ -1,20 +1,20 @@
 package it.scarpenti.marioinc
 package pipeline.data
 
-import utils.spark.SparkApp
+import utils.DateUtils.dashedFormat
 
-import org.apache.spark.sql.functions.{datediff, to_date, to_timestamp}
 import org.apache.spark.sql._
+import org.apache.spark.sql.functions.{datediff, to_date, to_timestamp}
 
 object DeviceDataPipeline extends SparkApp[DeviceDataContext] {
 
   override def init(): DeviceDataContext = new DeviceDataContext()
 
   override def run(context: DeviceDataContext): Unit = {
-    val rawData = session.read.format("delta").table(context.rawDataTableName)
+    val rawData = session.read.format("delta").table(config.rawDataTableName)
     logger.debug("schema is ==> " + rawData.schema)
 
-    val filtered = cleanData(context.receivedDate, rawData)
+    val filtered = cleanData(dashedFormat(context.receivedDate), rawData)
 
     val projected = projectData(filtered)
 
@@ -23,7 +23,7 @@ object DeviceDataPipeline extends SparkApp[DeviceDataContext] {
       .format("delta")
       .mode(SaveMode.Overwrite)
       .option("replaceWhere", s"received_date = '${context.receivedDate}'")
-      .saveAsTable(context.dataTableName)
+      .saveAsTable(config.dataTableName)
 
   }
 
@@ -39,7 +39,7 @@ object DeviceDataPipeline extends SparkApp[DeviceDataContext] {
 
     filtered
       .withColumnRenamed("received", "received_date")
-      .withColumn("event_timestamp", to_timestamp(filtered("timestamp"), "y-M-d'T'H:m:s.SSSX" ))
+      .withColumn("event_timestamp", to_timestamp(filtered("timestamp"), "y-M-d'T'H:m:s.SSSX"))
       .drop("timestamp")
       .select("received_date", "event_timestamp", "device", "CO2_level", "humidity", "temperature")
     //TODO column names should be saved somewhere (as constants in their respective data models for example)

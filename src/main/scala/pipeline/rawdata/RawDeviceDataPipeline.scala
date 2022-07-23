@@ -1,16 +1,14 @@
 package it.scarpenti.marioinc
 package pipeline.rawdata
 
-import utils.spark.SparkApp
-
-import org.apache.spark.sql.{SaveMode, SparkSession}
+import org.apache.spark.sql.SaveMode
 
 object RawDeviceDataPipeline extends SparkApp[RawDeviceDataContext] {
 
   override def init(): RawDeviceDataContext = new RawDeviceDataContext()
 
   override def run(context: RawDeviceDataContext): Unit = {
-    val csv = session.read.json(context.inputPath)
+    val csv = session.read.json(config.rawDataLandingZonePath)
     logger.debug("schema is ==> " + csv.schema)
 
     val filtered = csv
@@ -22,7 +20,7 @@ object RawDeviceDataPipeline extends SparkApp[RawDeviceDataContext] {
       .partitionBy("received")
       .mode(SaveMode.Overwrite)
       .option("replaceWhere", s"received = '${context.receivedDate}'")
-      .saveAsTable(context.fullTableName)
+      .saveAsTable(config.rawDataTableName)
 
   }
 
