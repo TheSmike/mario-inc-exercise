@@ -1,26 +1,24 @@
 package it.scarpenti.marioinc
 package pipeline.report
 
-import utils.spark.SparkApp
-
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions.{avg, col, date_format}
 
 object ReportPipeline extends SparkApp[ReportContext] {
 
-  override def init(args: Array[String]): ReportContext = new ReportContext(args)
+  override def init(): ReportContext = new ReportContext()
 
-
-  override def run(session: SparkSession, context: ReportContext): Unit = {
-    val cleansedData = session.read.format("delta").table(context.dataTableName)
-    val info = session.read.format("delta").table(context.infoTableName)
+  override def run(context: ReportContext): Unit = {
+    //TODO validate the input
+    val cleansedData = session.read.format("delta").table(config.dataTableName)
+    val info = session.read.format("delta").table(config.infoTableName)
       .withColumnRenamed("code", "device")
 
     val filtered = cleansedData
       .filter(date_format(col("event_date"), "yyyyMM").between(
         context.yearMonthFrom,
         context.yearMonthTo)
-      )  //TODO verify if this filter is pushed down to partition, if not a better partition strategy would be (year, month, day)
+      ) //TODO verify if this filter is pushed down to partition, if not a better partition strategy would be (year, month, day)
 
     val joined = filtered.join(info, "device")
     val grouped = groupByMonthAndArea(joined)
@@ -30,11 +28,11 @@ object ReportPipeline extends SparkApp[ReportContext] {
       .format("delta")
       .mode(SaveMode.Overwrite)
       .option("replaceWhere", s"year_month between '${context.yearMonthFrom}' and  '${context.yearMonthTo}'")
-      .saveAsTable(context.reportTableName)
+      .saveAsTable(config.reportTableName)
 
   }
 
-  def groupByMonthAndArea(joined: DataFrame) = {
+  def groupByMonthAndArea(joined: DataFrame): DataFrame = {
     joined
       .groupBy(
         date_format(col("event_date"), "yyyyMM").alias("year_month"),
