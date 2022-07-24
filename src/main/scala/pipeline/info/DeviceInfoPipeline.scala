@@ -9,7 +9,6 @@ object DeviceInfoPipeline extends SparkApp[DeviceInfoContext] {
 
   override def run(context: DeviceInfoContext): Unit = {
     val csv = readInfoDataFromLandingZone(session)
-    logger.info("schema is: " + csv.schema)
     writeInfoData(csv)
   }
 
@@ -20,4 +19,5 @@ object DeviceInfoPipeline extends SparkApp[DeviceInfoContext] {
   private def readInfoDataFromLandingZone(session: SparkSession) = {
     session.read.format("csv").option("header", "true").load(config.infoLandingZonePath)
   }
+  
 }
