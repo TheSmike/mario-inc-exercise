@@ -51,5 +51,9 @@ I'm used to adding comments to the columns when I create tables (I didn't do it 
 
 [//]: # (TODO Notes on gitflow? )
 
+force mode? 
+range of data?
+
+
 
 

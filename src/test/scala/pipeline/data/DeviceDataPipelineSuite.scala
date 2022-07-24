@@ -8,9 +8,6 @@ import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.must.Matchers._
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 
-import java.text.SimpleDateFormat
-import java.util.{Calendar, GregorianCalendar}
-
 
 class DeviceDataPipelineSuite extends AnyFunSuite with DataFrameSuiteBase {
 
@@ -18,9 +15,9 @@ class DeviceDataPipelineSuite extends AnyFunSuite with DataFrameSuiteBase {
     import sqlContext.implicits._
 
     val receivedDate = "2021-04-02"
-    val correct1 = RawDevice(917, "8xUD6pzsQI", 63, 27, "2021-04-01T03:45:21.199Z", receivedDate)
-    val correct2 = RawDevice(1425, "5gimpUrBB", 53, 15, "2021-04-01T01:35:50.749Z", receivedDate)
-    val tooOld = RawDevice(903, "6al7RTAobR", 72, 17, "2021-03-30T21:13:44.839Z", receivedDate)
+    val correct1 = RawDevice(receivedDate, "8xUD6pzsQI", "2021-04-01T03:45:21.199Z", 917, 63, 27, "2021-01-01")
+    val correct2 = RawDevice(receivedDate, "5gimpUrBB", "2021-04-01T01:35:50.749Z", 1425, 53, 15, "2021-01-01")
+    val tooOld = RawDevice(receivedDate, "6al7RTAobR", "2021-03-30T21:13:44.839Z", 903, 72, 17, "2021-01-01")
 
     val input = sc.parallelize(List(tooOld, correct1, correct2)).toDF
     val expected = sc.parallelize(List(correct1, correct2)).toDF
@@ -45,12 +42,12 @@ class DeviceDataPipelineSuite extends AnyFunSuite with DataFrameSuiteBase {
     val ts4 = receivedDate + "T22:12:20.042Z"
 
     val input = sc.parallelize(List(
-      RawDevice(828, id1, 72, 10, ts1, receivedDate),
-      RawDevice(828, id1, 72, 10, ts1, receivedDate), //duplicated data
-      RawDevice(1357, id2, 25, 30, ts2, receivedDate),
-      RawDevice(1005, id3, 65, 20, ts3, receivedDate),
-      RawDevice(1005, id3, 65, 20, ts3, receivedDate), //duplicated data
-      RawDevice(1581, id3, 96, 21, ts4, receivedDate),
+      RawDevice(receivedDate, id1, ts1, 828, 72, 10, "2021-01-01"),
+      RawDevice(receivedDate, id1, ts1, 828, 72, 10, "2021-01-01"), //duplicated data
+      RawDevice(receivedDate, id2, ts2, 1357, 25, 30, "2021-01-01"),
+      RawDevice(receivedDate, id3, ts3, 1005, 65, 20, "2021-01-01"),
+      RawDevice(receivedDate, id3, ts3, 1005, 65, 20, "2021-01-01"), //duplicated data
+      RawDevice(receivedDate, id3, ts4, 1581, 96, 21, "2021-01-01"),
     )).toDF
 
     val result = DeviceDataPipeline.cleanData(receivedDate, input)
