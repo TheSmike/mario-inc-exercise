@@ -1,7 +1,7 @@
 # Mario-inc Exercise
 An exercise in developing a Big Data project in Spark.
 
-This project should load Mario's devices Inc. data into a data lake (see [here](data_pipelines_exercise_camlin.md)
+This project should load Mario's devices Inc. data into a data lake (see [here](data_pipelines_exercise.md)
 for the details about requirements).
 
 The project contains 5 pipelines, one for each phase of the data processing.
