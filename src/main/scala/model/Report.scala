@@ -2,12 +2,11 @@ package it.scarpenti.marioinc
 package model
 
 case class Report(
-                   CO2_level: Long,
-                   device: String,
-                   humidity: Long,
-                   temperature: Long,
-                   timestamp: String,
-                   received: String
+                   year_month: Int,
+                   area: String,
+                   CO2_level_avg: Long,
+                   humidity_avg: Long,
+                   temperature_avg: Long,
                  )
 
 object Report {
