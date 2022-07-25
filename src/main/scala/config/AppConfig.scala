@@ -15,6 +15,7 @@ case class AppConfig(
 
                       dataTableName: String,
                       dataOutputPath: String,
+                      maxDelay: Int,
 
                       reportTableName: String,
                       reportOutputPath: String,

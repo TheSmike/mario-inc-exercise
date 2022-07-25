@@ -28,6 +28,7 @@ class ConfigReader(config: Config) {
       config.getString(s"$rawDataPrefix.output-path"),
       config.getString(s"$dataPrefix.table"),
       config.getString(s"$dataPrefix.output-path"),
+      config.getInt(s"$dataPrefix.max-delay"),
       config.getString(s"$reportPrefix.table"),
       config.getString(s"$reportPrefix.output-path"),
     )

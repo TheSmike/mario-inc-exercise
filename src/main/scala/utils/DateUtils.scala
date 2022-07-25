@@ -3,6 +3,7 @@ package utils
 
 import java.sql.{Date, Timestamp}
 import java.text.SimpleDateFormat
+import java.time.{LocalDate, ZoneId}
 import java.util.{Calendar, TimeZone}
 
 object DateUtils {
@@ -26,5 +27,9 @@ object DateUtils {
   def fromTimestamp(date: Timestamp): String = {
     tsUtcFormatter.format(date)
   }
+
+  def toLocalDate(cal: Calendar): LocalDate =
+    LocalDate.ofInstant(cal.toInstant, ZoneId.systemDefault())
+
 
 }

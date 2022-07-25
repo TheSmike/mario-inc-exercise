@@ -54,6 +54,8 @@ I'm used to adding comments to the columns when I create tables (I didn't do it 
 force mode? 
 range of data?
 
+I used to put primary filters, to select certain partitions for example, into the read method....
+
 
 
 
