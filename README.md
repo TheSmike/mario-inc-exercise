@@ -56,9 +56,8 @@ range of data?
 
 I used to put primary filters, to select certain partitions for example, into the read method....
 
-//TODO verify if this filter is pushed down to partition, if not a better partition strategy would be (year, month, day)
-
 I used to testing step and never the entire pipeline with unit tests, so...
 
-
+ 
+Functional programming vs OOP --- avoid a lot of parameters as input of a method
 
