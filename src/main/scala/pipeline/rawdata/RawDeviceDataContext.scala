@@ -3,9 +3,7 @@ package pipeline.rawdata
 
 import org.backuity.clist.arg
 
-import java.util.Calendar
-
 class RawDeviceDataContext() extends AbstractContext("device-raw-data") {
-  var receivedDate: Calendar = arg[Calendar](description = "Received date to process")
+  var receivedDate: String = arg[String](description = "Received date to process in the form yyyy-MM-dd. i.e.: 2021-01-01")
 }
 

@@ -1,10 +1,9 @@
 package it.scarpenti.marioinc
 package utils
 
-import java.sql.{Date, Timestamp}
 import java.text.SimpleDateFormat
-import java.time.{LocalDate, ZoneId}
-import java.util.{Calendar, TimeZone}
+import java.time.{Instant, LocalDate}
+import java.util.TimeZone
 
 object DateUtils {
 
@@ -12,24 +11,12 @@ object DateUtils {
   val tsUtcFormatter = new SimpleDateFormat("yyy-MM-dd'T'HH:mm:ss.SSSX")
   tsUtcFormatter.setTimeZone(TimeZone.getTimeZone("GMT"))
 
-  def dashedFormat(cal: Calendar): String = {
-    dashedFormatter.format(cal.getTime)
+  def toLocalDate(dateStr: String): LocalDate = {
+    LocalDate.parse(dateStr)
   }
 
-  def fromDashedFormat(dateStr: String): Date = {
-    Date.valueOf(dateStr)
+  def toInstant(timestampStr: String): Instant = {
+    Instant.parse(timestampStr)
   }
-
-  def toTimestamp(timestampStr: String): Timestamp = {
-    Timestamp.from(tsUtcFormatter.parse(timestampStr).toInstant)
-  }
-
-  def fromTimestamp(date: Timestamp): String = {
-    tsUtcFormatter.format(date)
-  }
-
-  def toLocalDate(cal: Calendar): LocalDate =
-    LocalDate.ofInstant(cal.toInstant, ZoneId.systemDefault())
-
 
 }

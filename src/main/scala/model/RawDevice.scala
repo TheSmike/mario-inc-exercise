@@ -1,18 +1,18 @@
 package it.scarpenti.marioinc
 package model
 
-import utils.DateUtils.{fromDashedFormat, toTimestamp}
+import utils.DateUtils.{toInstant, toLocalDate}
 
-import java.sql.{Date, Timestamp}
+import java.time.{Instant, LocalDate}
 
 case class RawDevice(
-                      received: String,
+                      received: LocalDate,
                       device: String,
-                      timestamp: Timestamp,
+                      timestamp: Instant,
                       CO2_level: Long,
                       humidity: Long,
                       temperature: Long,
-                      event_date: Date,
+                      event_date: LocalDate,
                     )
 
 object RawDevice {
@@ -32,6 +32,6 @@ object RawDevice {
             humidity: Long,
             temperature: Long,
             event_date: String) =
-    new RawDevice(received, device, toTimestamp(timestamp), CO2_level, humidity, temperature, fromDashedFormat(event_date))
+    new RawDevice(toLocalDate(received), device, toInstant(timestamp), CO2_level, humidity, temperature, toLocalDate(event_date))
 
 }

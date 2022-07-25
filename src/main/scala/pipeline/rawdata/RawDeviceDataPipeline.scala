@@ -2,7 +2,6 @@ package it.scarpenti.marioinc
 package pipeline.rawdata
 
 import model.RawDevice
-import utils.DateUtils.dashedFormat
 
 import org.apache.spark.sql.functions.{col, to_timestamp}
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SaveMode}
@@ -12,11 +11,9 @@ object RawDeviceDataPipeline extends SparkApp[RawDeviceDataContext] {
   override def init(): RawDeviceDataContext = new RawDeviceDataContext()
 
   override def run(context: RawDeviceDataContext): Unit = {
-    val receivedDateStr = dashedFormat(context.receivedDate)
-
-    val json = readRawDataFromLandingZone(receivedDateStr)
+    val json = readRawDataFromLandingZone(context.receivedDate)
     val transformed = timestampColToTimestampType(json)
-    writeRawData(receivedDateStr, transformed)
+    writeRawData(context.receivedDate, transformed)
   }
 
   private def writeRawData(receivedDateStr: String, transformed: DataFrame): Unit = {
@@ -26,6 +23,7 @@ object RawDeviceDataPipeline extends SparkApp[RawDeviceDataContext] {
       .mode(SaveMode.Overwrite)
       .option("replaceWhere", s"received = '$receivedDateStr'")
       .saveAsTable(config.rawDataTableName)
+    //TODO implement force mode. currently is always in "force mode"
   }
 
   private def timestampColToTimestampType(json: Dataset[Row]) = {
