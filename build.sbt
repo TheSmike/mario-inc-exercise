@@ -21,6 +21,5 @@ libraryDependencies ++= Seq(
   "org.backuity.clist" %% "clist-macros" % "3.5.1" % "provided",
   "org.apache.logging.log4j" %% "log4j-api-scala" % "12.0",
   "org.apache.logging.log4j" % "log4j-core" % "2.17.2" % Runtime,
-  "com.holdenkarau" %% "spark-testing-base" % "3.2.1_1.2.0" % Test,
 )
 

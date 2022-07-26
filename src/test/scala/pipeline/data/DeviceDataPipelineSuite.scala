@@ -2,19 +2,23 @@ package it.scarpenti.marioinc
 package pipeline.data
 
 import model.RawDevice
+import spark.SparkSessionFactory
 import utils.DateUtils.toLocalDate
 
-import com.holdenkarau.spark.testing.DataFrameSuiteBase
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.must.Matchers._
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 
 
-class DeviceDataPipelineSuite extends AnyFunSuite with DataFrameSuiteBase {
+class DeviceDataPipelineSuite extends AnyFunSuite with BeforeAndAfterAll {
 
-  import sqlContext.implicits._
+  private val session = SparkSessionFactory.getSession("local")
+  private val sc = session.sparkContext
+  private val logic = new DeviceDataLogic(session, 1)
 
-  val logic = new DeviceDataLogic(spark, 1)
+  import session.implicits._
+
 
   test("filterRawData should remove records older then 1 day") {
     val receivedDate = "2021-01-03"
@@ -23,15 +27,14 @@ class DeviceDataPipelineSuite extends AnyFunSuite with DataFrameSuiteBase {
     val tooOld = RawDevice(receivedDate, "6al7RTAobR", "2021-01-01T21:13:44.839Z", 903, 72, 17, "2021-01-01")
 
     val input = sc.parallelize(List(correct1, correct2, tooOld)).toDF
-    val expected = sc.parallelize(List(correct1, correct2)).toDF
+    val expected = List(correct1, correct2)
 
-    val result = logic.filterRawData(toLocalDate(receivedDate), input)
+    val result = logic.filterRawData(toLocalDate(receivedDate), input).as[RawDevice].collect().toList
 
-    assertDataFrameNoOrderEquals(result, expected)
+    result should contain theSameElementsAs expected
   }
 
   test("filterRawData should remove duplicated records in the same input") {
-    import sqlContext.implicits._
 
     val JanFirst = "2021-01-01"
     val JanSecond = "2021-01-02"

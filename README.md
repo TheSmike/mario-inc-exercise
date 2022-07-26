@@ -75,3 +75,5 @@ build a helper class to facilitate tests on spark
 PR comments
 
 Use range of dates (from,to) in every pipeline: to allow fast backfill
+
+Integration test - I try to do a separate IT
