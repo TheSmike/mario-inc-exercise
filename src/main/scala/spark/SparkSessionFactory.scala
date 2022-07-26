@@ -6,7 +6,20 @@ import org.apache.spark.sql.SparkSession
 
 object SparkSessionFactory {
 
+  private var profile: String = null
+  private lazy val session = createSession(profile)
+
+
   def getSession(profile: String): SparkSession = {
+    if (SparkSessionFactory.profile == null)
+      SparkSessionFactory.profile = profile
+    else if (SparkSessionFactory.profile != profile)
+      throw new Exception(s"Session already initialized with profile ${SparkSessionFactory.profile}")
+
+    session
+  }
+
+  private def createSession(profile: String) = {
     setLog()
 
     val builder =
@@ -19,11 +32,15 @@ object SparkSessionFactory {
       .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
       .config("spark.sql.session.timeZone", "UTC")
       .config("spark.sql.datetime.java8API.enabled", "true")
+
       .enableHiveSupport()
       .getOrCreate()
   }
 
-  private def localBuilder() = SparkSession.builder().master("local[1]")
+  private def localBuilder() =
+    SparkSession.builder()
+      .master("local[1]")
+      .config("spark.sql.warehouse.dir", "/tmp/marioinc/spark-warehouse")
 
   private def genericBuilder() = SparkSession.builder()
 

@@ -1,17 +1,17 @@
 package it.scarpenti.marioinc
 package model
 
-import java.sql.Timestamp
-import java.util.Date
+import java.time.{Instant, LocalDate}
+
 
 case class Device(
-                   received_data: Date,
-                   event_timestamp: Timestamp,
+                   received_date: LocalDate,
+                   event_timestamp: Instant,
                    device: String,
-                   CO2_level: Int,
-                   humidity: Int,
-                   temperature: Int,
-                   event_date: Date
+                   CO2_level: Long,
+                   humidity: Long,
+                   temperature: Long,
+                   event_date: LocalDate
                  )
 
 object Device {
