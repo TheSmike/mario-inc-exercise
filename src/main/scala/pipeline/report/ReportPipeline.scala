@@ -1,47 +1,78 @@
 package it.scarpenti.marioinc
 package pipeline.report
 
+import model.{Device, Report}
+
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions.{avg, col, date_format}
+import org.apache.spark.sql.types.IntegerType
 
 object ReportPipeline extends SparkApp[ReportContext] {
 
   override def init(): ReportContext = new ReportContext()
 
   override def run(context: ReportContext): Unit = {
-    //TODO validate the input
-    val cleansedData = session.read.format("delta").table(config.dataTableName)
-    val info = session.read.format("delta").table(config.infoTableName)
-      .withColumnRenamed("code", "device")
+    validateInput(context)
 
-    val filtered = cleansedData
-      .filter(date_format(col("event_date"), "yyyyMM").between(
-        context.yearMonthFrom,
-        context.yearMonthTo)
-      ) //TODO verify if this filter is pushed down to partition, if not a better partition strategy would be (year, month, day)
+    val data = readData
+    val info = readInfo
 
-    val joined = filtered.join(info, "device")
+    val infoProj = projectInfo(info)
+    val filtered = filterData(context, data)
+    val joined = joinDataAndInfo(infoProj, filtered)
     val grouped = groupByMonthAndArea(joined)
 
+    writeReport(context, grouped)
+  }
+
+  private def writeReport(context: ReportContext, grouped: DataFrame): Unit = {
     grouped
       .write
       .format("delta")
       .mode(SaveMode.Overwrite)
-      .option("replaceWhere", s"year_month between '${context.yearMonthFrom}' and  '${context.yearMonthTo}'")
+      .option("replaceWhere", s"${Report.YEAR_MONTH} between ${context.intYearMonthFrom} and ${context.intYearMonthTo}")
       .saveAsTable(config.reportTableName)
+  }
 
+  private def joinDataAndInfo(infoProj: DataFrame, filtered: DataFrame) = {
+    filtered.join(infoProj, "device")
+  }
+
+  private def validateInput(context: ReportContext): Unit = {
+    //TODO validate input parameters (are they really months?)
+  }
+
+  private def filterData(context: ReportContext, cleansedData: DataFrame) = {
+    cleansedData
+      .filter(date_format(col(Device.EVENT_DATE), "yyyyMM").cast(IntegerType).between(
+        context.intYearMonthFrom,
+        context.intYearMonthTo)
+      )
+    //TODO Verify if this filter is pushed down to partition, if not a better partition strategy would be (year, month, day)
+  }
+
+  private def projectInfo(info: DataFrame) = {
+    info.withColumnRenamed("code", "device")
+  }
+
+  private def readInfo = {
+    session.read.format("delta").table(config.infoTableName)
+  }
+
+  private def readData = {
+    session.read.format("delta").table(config.dataTableName)
   }
 
   def groupByMonthAndArea(joined: DataFrame): DataFrame = {
     joined
       .groupBy(
-        date_format(col("event_date"), "yyyyMM").alias("year_month"),
-        col("area")
+        date_format(col(Device.EVENT_DATE), "yyyyMM").cast(IntegerType).alias(Report.YEAR_MONTH),
+        col(Report.AREA)
       )
       .agg(
-        avg(col("CO2_level")).alias("CO2_level_avg"),
-        avg(col("humidity")).alias("humidity_avg"),
-        avg(col("temperature")).alias("temperature_avg")
+        avg(col(Device.CO2_LEVEL)).alias(Report.CO2_LEVEL_AVG),
+        avg(col(Device.HUMIDITY)).alias(Report.HUMIDITY_AVG),
+        avg(col(Device.TEMPERATURE)).alias(Report.TEMPERATURE_AVG)
       )
   }
 

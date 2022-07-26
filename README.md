@@ -51,5 +51,16 @@ I'm used to adding comments to the columns when I create tables (I didn't do it 
 
 [//]: # (TODO Notes on gitflow? )
 
+force mode? 
+range of data?
 
+I used to put primary filters, to select certain partitions for example, into the read method....
 
+I used to testing step and never the entire pipeline with unit tests, so...
+
+ 
+Functional programming vs OOP --- avoid a lot of parameters as input of a method
+  - config vs passing all parameters to method
+  - 
+
+holden karau usage lib should be optimized, currently it can be used on more than one test
