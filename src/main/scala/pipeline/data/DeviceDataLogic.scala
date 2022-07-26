@@ -11,7 +11,7 @@ import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
-class DeviceDataLogic(session: SparkSession, config: AppConfig, force: Boolean) {
+class DeviceDataLogic(session: SparkSession, config: AppConfig, force: Boolean = false) {
 
   def run(receivedDate: LocalDate): Unit = {
     val raw = readDfRawDataTable()
@@ -34,7 +34,6 @@ class DeviceDataLogic(session: SparkSession, config: AppConfig, force: Boolean) 
       .whenNotMatched()
       .insertAll()
       .execute()
-
     //TODO handle the force mode? how?
   }
 
@@ -42,7 +41,7 @@ class DeviceDataLogic(session: SparkSession, config: AppConfig, force: Boolean) 
     session.read.format("delta").table(config.rawDataTableName)
   }
 
-  private def filterRawData(receivedDate: LocalDate, bronze: DataFrame): Dataset[Row] = {
+  def filterRawData(receivedDate: LocalDate, bronze: DataFrame): Dataset[Row] = {
     bronze
       .filter(col(RawDevice.EVENT_DATE).between(
         receivedDate.plus(-config.maxDelay, ChronoUnit.DAYS),

@@ -60,4 +60,7 @@ I used to testing step and never the entire pipeline with unit tests, so...
 
  
 Functional programming vs OOP --- avoid a lot of parameters as input of a method
+  - config vs passing all parameters to method
+  - 
 
+holden karau usage lib should be optimized, currently it can be used on more than one test
