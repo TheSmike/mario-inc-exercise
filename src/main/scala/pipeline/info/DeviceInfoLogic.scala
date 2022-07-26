@@ -5,7 +5,7 @@ import config.AppConfig
 
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 
-class DeviceInfoLogic(session: SparkSession, config: AppConfig, force: Boolean) {
+class DeviceInfoLogic(session: SparkSession, config: AppConfig) {
 
   def run(): Unit = {
     val csv = readInfoDataFromLandingZone(session)

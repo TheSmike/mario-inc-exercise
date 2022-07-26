@@ -2,7 +2,6 @@ package it.scarpenti.marioinc
 package pipeline.data
 
 import model.RawDevice
-import pipeline.TestUtils.initTestAppConfig
 import utils.DateUtils.toLocalDate
 
 import com.holdenkarau.spark.testing.DataFrameSuiteBase
@@ -13,12 +12,11 @@ import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 
 class DeviceDataPipelineSuite extends AnyFunSuite with DataFrameSuiteBase {
 
-  val config = initTestAppConfig(maxDelay = 1)
-  val logic = new DeviceDataLogic(spark, config)
+  import sqlContext.implicits._
+
+  val logic = new DeviceDataLogic(spark, 1)
 
   test("filterRawData should remove records older then 1 day") {
-    import sqlContext.implicits._
-
     val receivedDate = "2021-01-03"
     val correct1 = RawDevice(receivedDate, "8xUD6pzsQI", "2021-01-03T03:45:21.199Z", 917, 63, 27, "2021-01-03")
     val correct2 = RawDevice(receivedDate, "5gimpUrBB", "2021-01-02T01:35:50.749Z", 1425, 53, 15, "2021-01-02")
@@ -62,7 +60,6 @@ class DeviceDataPipelineSuite extends AnyFunSuite with DataFrameSuiteBase {
 
     result should have size 4
     result should contain allOf((id1, ts1), (id2, ts2), (id3, ts3), (id3, ts4))
-
   }
 
 }

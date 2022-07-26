@@ -1,7 +1,6 @@
 package it.scarpenti.marioinc
 package pipeline.data
 
-import config.AppConfig
 import model.{Device, RawDevice}
 
 import io.delta.tables.DeltaTable
@@ -11,15 +10,13 @@ import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
-class DeviceDataLogic(session: SparkSession, config: AppConfig, force: Boolean = false) {
+class DeviceDataLogic(session: SparkSession, maxDelay: Int) {
 
-  def run(receivedDate: LocalDate): Unit = {
-    val raw = readDfRawDataTable()
-    val rawFiltered = filterRawData(receivedDate, raw)
+  def run(receivedDate: LocalDate, rawInputDs: DataFrame, outputDeltaTable: DeltaTable): Unit = {
+    val rawFiltered = filterRawData(receivedDate, rawInputDs)
     val rawProjected = projectRawData(rawFiltered)
 
-    val oldData = readDeltaDataTable()
-    mergeRawIntoDeviceData(receivedDate, rawProjected, oldData)
+    mergeRawIntoDeviceData(receivedDate, rawProjected, outputDeltaTable)
   }
 
   private def mergeRawIntoDeviceData(receivedDate: LocalDate, rawProjected: DataFrame, oldData: DeltaTable): Unit = {
@@ -27,24 +24,20 @@ class DeviceDataLogic(session: SparkSession, config: AppConfig, force: Boolean =
       .as("data")
       .merge(
         rawProjected.as("raw"),
-        col("data." + Device.EVENT_DATE).between(receivedDate.plus(-config.maxDelay, ChronoUnit.DAYS), receivedDate)
+        col("data." + Device.EVENT_DATE).between(receivedDate.plus(-maxDelay, ChronoUnit.DAYS), receivedDate)
           && (col("data." + Device.DEVICE) === col("raw." + Device.DEVICE))
           && (col("data." + Device.EVENT_TIMESTAMP) === col("raw." + Device.EVENT_TIMESTAMP))
       )
       .whenNotMatched()
       .insertAll()
       .execute()
-    //TODO handle the force mode? how?
-  }
-
-  private def readDfRawDataTable() = {
-    session.read.format("delta").table(config.rawDataTableName)
+    //TODO handle the force mode? how? when matched than update
   }
 
   def filterRawData(receivedDate: LocalDate, bronze: DataFrame): Dataset[Row] = {
     bronze
       .filter(col(RawDevice.EVENT_DATE).between(
-        receivedDate.plus(-config.maxDelay, ChronoUnit.DAYS),
+        receivedDate.plus(-maxDelay, ChronoUnit.DAYS),
         receivedDate
       ))
       .filter(col(RawDevice.RECEIVED) === receivedDate)
@@ -52,12 +45,9 @@ class DeviceDataLogic(session: SparkSession, config: AppConfig, force: Boolean =
   }
 
   def projectRawData(filtered: Dataset[Row]): DataFrame = {
-
     filtered
       .withColumnRenamed(RawDevice.RECEIVED, Device.RECEIVED_DATE)
       .withColumnRenamed(RawDevice.TIMESTAMP, Device.EVENT_TIMESTAMP)
   }
-
-  private def readDeltaDataTable() = DeltaTable.forName(config.dataTableName)
 
 }

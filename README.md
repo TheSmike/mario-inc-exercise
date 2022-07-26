@@ -1,7 +1,8 @@
 # Mario-inc Exercise
-An exercise in developing a Big Data project in Spark.
 
-This project should load Mario's devices Inc. data into a data lake (see [here](data_pipelines_exercise.md)
+Mario's devices Inc. has developed a set of devices which can monitor weather conditions and air
+quality
+This project handle loading of device Data Mario's devices Inc. data into a data lake (see [here](data_pipelines_exercise.md)
 for the details about requirements).
 
 The project contains 5 pipelines, one for each phase of the data processing.
@@ -64,3 +65,13 @@ Functional programming vs OOP --- avoid a lot of parameters as input of a method
   - 
 
 holden karau usage lib should be optimized, currently it can be used on more than one test
+
+maxDelay as parameter or as property? depends
+
+path vs table
+
+build a helper class to facilitate tests on spark
+
+PR comments
+
+Use range of dates (from,to) in every pipeline: to allow fast backfill
