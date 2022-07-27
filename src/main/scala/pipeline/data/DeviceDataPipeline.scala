@@ -14,6 +14,7 @@ object DeviceDataPipeline extends SparkApp[DeviceDataContext] {
     val rawInputDs = readDfRawDataTable()
     val outputDeltaTable = readDeltaDataTable()
     new DeviceDataLogic(session, config.maxDelay).run(receivedDate, rawInputDs, outputDeltaTable)
+    optimizeOutputTable()
   }
 
   private def readDfRawDataTable() = {
@@ -22,6 +23,10 @@ object DeviceDataPipeline extends SparkApp[DeviceDataContext] {
 
   private def readDeltaDataTable() = DeltaTable.forName(config.dataTableName)
 
+  def optimizeOutputTable(): Unit = {
+    //TODO: To effectively implement
+    //session.sql(s"OPTIMIZE ${config.dataTableName} ZORDER BY (${Device.DEVICE})")}
+  }
 
 }
 

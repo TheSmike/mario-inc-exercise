@@ -66,7 +66,7 @@ class CreateTablesLogic(session: SparkSession, config: AppConfig, force: Boolean
           .dataType(DateType)
           .generatedAlwaysAs(s"CAST(${Device.EVENT_TIMESTAMP} AS DATE)")
           .build())
-      .partitionedBy(Device.EVENT_DATE, Device.DEVICE)
+      .partitionedBy(Device.EVENT_DATE)
       .location(config.dataOutputPath)
       .execute()
   }
