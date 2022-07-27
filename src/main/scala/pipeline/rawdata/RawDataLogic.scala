@@ -7,7 +7,7 @@ import model.RawDevice
 import org.apache.spark.sql.functions.{col, to_timestamp}
 import org.apache.spark.sql._
 
-class RawDataLogic(session: SparkSession, config: AppConfig, force: Boolean) {
+class RawDataLogic(session: SparkSession, config: AppConfig) {
 
   def run(receivedDate: String): Unit = {
     val json = readRawDataFromLandingZone(receivedDate)

@@ -8,7 +8,7 @@ import org.apache.spark.sql._
 import org.apache.spark.sql.functions.{avg, col, date_format}
 import org.apache.spark.sql.types.IntegerType
 
-class ReportLogic(session: SparkSession, config: AppConfig, force: Boolean) {
+class ReportLogic(session: SparkSession, config: AppConfig) {
 
   def run(yearMonthFrom: Int, yearMonthTo: Int): Unit = {
     val data = readData
