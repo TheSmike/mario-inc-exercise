@@ -1,26 +1,19 @@
 package it.scarpenti.marioinc
 package pipeline.report
 
-import com.typesafe.config._
+import org.backuity.clist.arg
 
+class ReportContext() extends AbstractContext("report") {
+  var yearMonthFrom: String = arg[String](description = "The starting month from which to calculate the report, in the form yyy-MM. i.e.: 2020-01")
+  var yearMonthTo: String = arg[String](description = "The last month to use calculate the report. It will be in the form yyy-MM. i.e.: 2020-11")
 
-class ReportContext(config: Config, args: Array[String]) {
+  def intYearMonthFrom: Int = toInt(yearMonthFrom)
 
-  def this(args: Array[String]) {
-    this(ConfigFactory.load(), args)
-  }
+  def intYearMonthTo: Int = toInt(yearMonthTo)
 
-  final private val prefix = "device-report"
-  config.checkValid(ConfigFactory.defaultReference(), prefix)
+  //TODO a date parser is certainly a better solutions for the method below!
+  private def toInt(yearMonth: String): Int = yearMonth.replace("-", "").toInt
 
-  val appName = config.getString(s"$prefix.name")
-  val dataTableName = config.getString("device-data.full-table-name")
-  val reportTableName = config.getString(s"$prefix.full-table-name")
-  val infoTableName = config.getString("device-info.full-table-name")
-
-  val yearMonthFrom = args(0)
-  val yearMonthTo = args(1)
-  //TODO introduce something better to parse args (and to validate them)
 
 }
 
