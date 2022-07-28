@@ -1,33 +1,27 @@
 package it.scarpenti.marioinc
 package pipeline.data
 
-import model.RawDevice
+import config.AppConfig
+import model.{Device, RawDevice}
 import pipeline.TestUtils.initTestAppConfig
+import pipeline.init.CreateTablesLogic
 import spark.SparkSessionFactory
 import utils.DateUtils.toLocalDate
 import utils.Profiles.LOCAL
 
-import org.scalatest.BeforeAndAfterAll
+import io.delta.tables.DeltaTable
+import org.apache.spark.sql.types._
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.must.Matchers._
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 
 
-class DeviceDataPipelineSuite extends AnyFunSuite with BeforeAndAfterAll {
-
-  final val database = "tests_db"
-  final val outputTableName = s"$database.test_duplicates_table"
+class DeviceDataPipelineSuite extends AnyFunSuite {
 
   private val session = SparkSessionFactory.getSession(LOCAL)
   private val sc = session.sparkContext
 
   import session.implicits._
-
-
-  override def beforeAll(): Unit = {
-    session.sql(s"CREATE DATABASE IF NOT EXISTS $database LOCATION '/tmp/marioinc/tests_db/' ")
-    //FIXME in test env this command logs (but don't throws) the exception AlreadyExistsException
-  }
 
   test("filterRawData should remove records with event date not in the range (eventDateFrom, eventDateTo)") {
     val receivedDate = "2021-01-03"
@@ -80,46 +74,52 @@ class DeviceDataPipelineSuite extends AnyFunSuite with BeforeAndAfterAll {
     result should contain allOf((id1, ts1), (id2, ts2), (id3, ts3), (id3, ts4))
   }
 
+  test("multiple pipeline runs shouldn't load duplicated records") {
 
-  //TODO reintegrate the test on duplicates after changing writing logic
-  //  test("multiple pipeline runs shouldn't load duplicated records") {
-  //    val rawInputDs = session.read.json("src/test/resources/test_data/duplicates_on_different_dates")
-  //    val outputDeltaTable = createTmpDataDeltaTable(session, outputTableName)
-  //
-  //    val config = initTestAppConfig(rawDataTableName = "", dataTableName = "")
-  //    val logic = new DeviceDataLogic(session, initTestAppConfig())
-  //
-  //    logic.run(toLocalDate("2021-04-01"), rawInputDs, outputDeltaTable)
-  //    logic.run(toLocalDate("2021-04-02"), rawInputDs, outputDeltaTable)
-  //
-  //    val result = session.read.table(outputTableName).as[Device].collect.toList
-  //      .map(r => (r.device, r.event_timestamp))
-  //
-  //    result should contain theSameElementsAs result.toSet
-  //  }
-  //
-  //  private def createTmpDataDeltaTable(session: SparkSession, tableName: String): DeltaTable = {
-  //    if (DeltaTable.isDeltaTable(tableName))
-  //      DeltaTable.forName(tableName).delete()
-  //
-  //    DeltaTable.createOrReplace(session)
-  //      .tableName(tableName)
-  //      .addColumn(Device.RECEIVED_DATE, DateType)
-  //      .addColumn(Device.EVENT_TIMESTAMP, TimestampType)
-  //      .addColumn(Device.DEVICE, StringType)
-  //      .addColumn(Device.CO2_LEVEL, LongType)
-  //      .addColumn(Device.HUMIDITY, LongType)
-  //      .addColumn(Device.TEMPERATURE, LongType)
-  //      .addColumn(
-  //        DeltaTable.columnBuilder(Device.EVENT_DATE)
-  //          .dataType(DateType)
-  //          .generatedAlwaysAs(s"CAST(${Device.EVENT_TIMESTAMP} AS DATE)")
-  //          .build())
-  //      .partitionedBy(Device.EVENT_DATE, Device.DEVICE)
-  //      .location(s"/tmp/marioinc/${tableName.replace('.', '/')}/")
-  //      .execute()
-  //    //TODO part of this method could be refactored to match the create table in the init pipeline
-  //  }
+    val database = "tests_db"
+    val rawDataTableName = s"raw_duplicates_on_different_dates"
+    val outputTableName = s"$database.test_duplicates_table"
+
+    val config = initTestAppConfig(
+      database = database,
+      rawDataTableName = rawDataTableName,
+      dataTableName = outputTableName,
+    )
+
+    initRawData(rawDataTableName)
+    initOutputTable(outputTableName, config)
+
+    val logic = new DeviceDataLogic(session, config, LOCAL)
+
+    logic.run(toLocalDate("2021-04-01"))
+    logic.run(toLocalDate("2021-04-02"))
+
+    val result = session.read.table(outputTableName).as[Device].collect.toList
+      .map(r => (r.device, r.event_timestamp))
+
+    result should contain theSameElementsAs result.toSet
+  }
+
+  private def initOutputTable(outputTableName: String, config: AppConfig): Unit = {
+    val createLogic = new CreateTablesLogic(session, config)
+    createLogic.createDataTable(true)
+    DeltaTable.forName(outputTableName).delete()
+  }
+
+  private def initRawData(rawDataTableName: String): Unit = {
+    val rawInputDs = session.read.schema(rawSchema).json("src/test/resources/test_data/duplicates_on_different_dates")
+    rawInputDs.createOrReplaceTempView(rawDataTableName)
+  }
+
+  private val rawSchema = StructType(Array(
+    StructField(RawDevice.RECEIVED, DateType),
+    StructField(RawDevice.DEVICE, StringType),
+    StructField(RawDevice.TIMESTAMP, TimestampType),
+    StructField(RawDevice.CO2_LEVEL, LongType),
+    StructField(RawDevice.HUMIDITY, LongType),
+    StructField(RawDevice.TEMPERATURE, LongType),
+    StructField(RawDevice.EVENT_DATE, DateType),
+  ))
 
 }
 

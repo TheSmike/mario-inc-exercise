@@ -5,7 +5,6 @@ import config.AppConfig
 import model.{Device, RawDevice}
 import utils.Profiles.{PRODUCTION, STAGING}
 
-import io.delta.tables.DeltaTable
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql._
 
@@ -47,8 +46,8 @@ class DeviceDataLogic(session: SparkSession, config: AppConfig, profile: String)
       .write
       .format("delta")
       .mode(SaveMode.Overwrite)
-      .option("replaceWhere", s"${Device.EVENT_DATE} between '$eventDateFrom' and '$eventDateTo")
-      .saveAsTable(config.rawDataTableName)
+      .option("replaceWhere", s"${Device.EVENT_DATE} >= '$eventDateFrom' and ${Device.EVENT_DATE} <= '$eventDateTo'")
+      .saveAsTable(config.dataTableName)
   }
 
   /**

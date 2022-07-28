@@ -8,7 +8,7 @@ import io.delta.tables.DeltaTable
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types._
 
-class CreateTablesLogic(session: SparkSession, config: AppConfig, force: Boolean) {
+class CreateTablesLogic(session: SparkSession, config: AppConfig, force: Boolean = false) {
 
   def run(): Unit = {
     createDatabase(session)
@@ -18,11 +18,11 @@ class CreateTablesLogic(session: SparkSession, config: AppConfig, force: Boolean
     createReportTable(force)
   }
 
-  private def createDatabase(session: SparkSession) = {
+  def createDatabase(session: SparkSession): Unit = {
     session.sql(s"CREATE DATABASE IF NOT EXISTS mario LOCATION '${config.databasePath}' ")
   }
 
-  private def createInfoTable(force: Boolean) = {
+  def createInfoTable(force: Boolean): DeltaTable = {
     createTableBuilder(force)
       .tableName(config.infoTableName)
       .addColumn(Info.CODE, StringType)
@@ -33,7 +33,7 @@ class CreateTablesLogic(session: SparkSession, config: AppConfig, force: Boolean
       .execute()
   }
 
-  private def createRawDataTable(force: Boolean) = {
+  def createRawDataTable(force: Boolean): DeltaTable = {
     createTableBuilder(force)
       .tableName(config.rawDataTableName)
       .addColumn(RawDevice.RECEIVED, DateType)
@@ -52,7 +52,7 @@ class CreateTablesLogic(session: SparkSession, config: AppConfig, force: Boolean
       .execute()
   }
 
-  private def createDataTable(force: Boolean): Unit = {
+  def createDataTable(force: Boolean): DeltaTable = {
     createTableBuilder(force)
       .tableName(config.dataTableName)
       .addColumn(Device.RECEIVED_DATE, DateType)
@@ -71,12 +71,7 @@ class CreateTablesLogic(session: SparkSession, config: AppConfig, force: Boolean
       .execute()
   }
 
-  private def createTableBuilder(force: Boolean) = {
-    if (force) DeltaTable.createOrReplace(session)
-    else DeltaTable.createIfNotExists(session)
-  }
-
-  private def createReportTable(force: Boolean): Unit = {
+  def createReportTable(force: Boolean): DeltaTable = {
     createTableBuilder(force)
       .tableName(config.reportTableName)
       .addColumn(Report.YEAR_MONTH, IntegerType)
@@ -86,6 +81,11 @@ class CreateTablesLogic(session: SparkSession, config: AppConfig, force: Boolean
       .addColumn(Report.TEMPERATURE_AVG, DoubleType)
       .location(config.reportOutputPath)
       .execute()
+  }
+
+  private def createTableBuilder(force: Boolean) = {
+    if (force) DeltaTable.createOrReplace(session)
+    else DeltaTable.createIfNotExists(session)
   }
 
 }
