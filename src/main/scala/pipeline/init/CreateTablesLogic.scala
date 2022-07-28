@@ -19,7 +19,7 @@ class CreateTablesLogic(session: SparkSession, config: AppConfig, force: Boolean
   }
 
   def createDatabase(session: SparkSession): Unit = {
-    session.sql(s"CREATE DATABASE IF NOT EXISTS mario LOCATION '${config.databasePath}' ")
+    session.sql(s"CREATE DATABASE IF NOT EXISTS ${config.database} LOCATION '${config.databasePath}' ")
   }
 
   def createInfoTable(force: Boolean): DeltaTable = {

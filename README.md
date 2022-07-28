@@ -169,16 +169,15 @@ Some other notes are reported below:
  - The force mode has been partially (slightly) introduced. In the final version force mode should allow rewriting data 
    generated with that specific run (drop data generated with the same input parameters and regenerate them).
  - It's a good practice to handle range of data as input of the pipeline, it's allow us calculating multiple partition
-   at a time and to facilitate possible backfill of data.
- - DeviceDataLogic is a bit different among other `*Logic` classes, it has been changed to allow integration tests on 
-   the pipeline, for the sake of simplicity and brevity of this exercise only this logic has been re factorized but also
-   the other logics should need refactoring. At this point we can start a discussion on how to isolate business logic 
-   respect config and if we prefer OOP respect to functional programming. Just to cite an example of pros and cons:
+   at a time and to facilitate possible backfill of data. 
+ - In this project I chose to create Logic classes (instead of objects), then with an internal status with inside 
+session and config. At this point we could start a discussion on how to isolate business logic respect config and if we 
+prefer OOP respect to functional programming. Just to cite an example of pros and cons:
    "avoid a lot of parameters as input of a method (OOP) vs make it clear who uses what (functional)"
  - All the tables in the pipelines has been read and write by name, obviously except landing zone files that don't have
    corresponding tables.
  - I had some issues with tests using Spark in different test classes, I try to make the Spark session a Singleton and
-   to set sbt to run tests sequentially, but it didn't work. I should spend time to investigate further to separate 
+   to set sbt to run tests sequentially, but it didn't work. I should spend more time to investigate further to separate 
    integration tests and unit tests.
  - Files size is an aspect that should be optimized perhaps
  - The selected partition strategy optimise reading of data by event date. To optimise reading also by device the
