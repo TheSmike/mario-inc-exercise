@@ -29,7 +29,7 @@ class DeviceDataPipelineSuite extends AnyFunSuite with BeforeAndAfterAll {
     //FIXME in test env this command logs (but don't throws) the exception AlreadyExistsException
   }
 
-  test("filterRawData should remove records older then 1 day") {
+  test("filterRawData should remove records with event date not in the range (eventDateFrom, eventDateTo)") {
     val receivedDate = "2021-01-03"
     val correct1 = RawDevice(receivedDate, "8xUD6pzsQI", "2021-01-03T03:45:21.199Z", 917, 63, 27, "2021-01-03")
     val correct2 = RawDevice(receivedDate, "5gimpUrBB", "2021-01-02T01:35:50.749Z", 1425, 53, 15, "2021-01-02")
@@ -39,12 +39,14 @@ class DeviceDataPipelineSuite extends AnyFunSuite with BeforeAndAfterAll {
     val expected = List(correct1, correct2)
 
     val logic = new DeviceDataLogic(session, initTestAppConfig(), LOCAL)
-    val result = logic.filterRawData(toLocalDate(receivedDate), input).as[RawDevice].collect().toList
+    val eventDateFrom = toLocalDate("2021-01-02")
+    val eventDateTo = toLocalDate("2021-01-03")
+    val result = logic.filterRawData(input, eventDateFrom, eventDateTo).as[RawDevice].collect().toList
 
     result should contain theSameElementsAs expected
   }
 
-  test("filterRawData should remove duplicated records in the same input") {
+  test("filterRawData should remove duplicated records") {
 
     val JanFirst = "2021-01-01"
     val JanSecond = "2021-01-02"
@@ -69,8 +71,9 @@ class DeviceDataPipelineSuite extends AnyFunSuite with BeforeAndAfterAll {
 
     val logic = new DeviceDataLogic(session, initTestAppConfig(), LOCAL)
 
-    val result = logic.filterRawData(toLocalDate(JanSecond), input)
-      .as[RawDevice].collect.toList
+    val eventDateFrom = toLocalDate(JanFirst)
+    val eventDateTo = toLocalDate(JanSecond)
+    val result = logic.filterRawData(input, eventDateFrom, eventDateTo).as[RawDevice].collect.toList
       .map(r => (r.device, r.timestamp.toString))
 
     result should have size 4

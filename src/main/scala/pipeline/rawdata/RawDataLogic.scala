@@ -20,13 +20,14 @@ class RawDataLogic(session: SparkSession, config: AppConfig) {
       .write
       .format("delta")
       .mode(SaveMode.Overwrite)
-      .option("replaceWhere", s"received = '$receivedDateStr'")
+      .option("replaceWhere", s"${RawDevice.RECEIVED} = '$receivedDateStr'")
       .saveAsTable(config.rawDataTableName)
-    //TODO implement force mode. currently is always in "force mode"
+    //TODO fully implement force mode. currently is always in "force mode"
   }
 
   private def timestampColToTimestampType(json: Dataset[Row]) = {
     json.withColumn(RawDevice.TIMESTAMP, to_timestamp(col(RawDevice.TIMESTAMP)))
+    //TODO: an alternative could be forcing a schema
   }
 
   private def readRawDataFromLandingZone(receivedDateStr: String) = {
