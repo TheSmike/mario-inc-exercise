@@ -23,19 +23,16 @@ class DeviceDataPipelineSuite extends AnyFunSuite {
 
   import session.implicits._
 
-  test("filterRawData should remove records with event date not in the range (eventDateFrom, eventDateTo)") {
-    val receivedDate = "2021-01-03"
-    val correct1 = RawDevice(receivedDate, "8xUD6pzsQI", "2021-01-03T03:45:21.199Z", 917, 63, 27, "2021-01-03")
-    val correct2 = RawDevice(receivedDate, "5gimpUrBB", "2021-01-02T01:35:50.749Z", 1425, 53, 15, "2021-01-02")
-    val tooOld = RawDevice(receivedDate, "6al7RTAobR", "2021-01-01T21:13:44.839Z", 903, 72, 17, "2021-01-01")
+  test("filterRawData should remove records older then 1 day)") {
+    val correct1 = RawDevice("2021-01-03", "8xUD6pzsQI", "2021-01-03T03:45:21.199Z", 917, 63, 27, "2021-01-03")
+    val correct2 = RawDevice("2021-01-03", "5gimpUrBB", "2021-01-02T01:35:50.749Z", 1425, 53, 15, "2021-01-02")
+    val tooOld = RawDevice("2021-01-04", "6al7RTAobR", "2021-01-02T21:13:44.839Z", 903, 72, 17, "2021-01-02")
 
     val input = sc.parallelize(List(correct1, correct2, tooOld)).toDF
     val expected = List(correct1, correct2)
 
     val logic = new DeviceDataLogic(session, initTestAppConfig(), LOCAL)
-    val eventDateFrom = toLocalDate("2021-01-02")
-    val eventDateTo = toLocalDate("2021-01-03")
-    val result = logic.filterRawData(input, eventDateFrom, eventDateTo).as[RawDevice].collect().toList
+    val result = logic.filterRawData(input).as[RawDevice].collect().toList
 
     result should contain theSameElementsAs expected
   }
@@ -65,9 +62,7 @@ class DeviceDataPipelineSuite extends AnyFunSuite {
 
     val logic = new DeviceDataLogic(session, initTestAppConfig(), LOCAL)
 
-    val eventDateFrom = toLocalDate(JanFirst)
-    val eventDateTo = toLocalDate(JanSecond)
-    val result = logic.filterRawData(input, eventDateFrom, eventDateTo).as[RawDevice].collect.toList
+    val result = logic.filterRawData(input).as[RawDevice].collect.toList
       .map(r => (r.device, r.timestamp.toString))
 
     result should have size 4
@@ -77,17 +72,16 @@ class DeviceDataPipelineSuite extends AnyFunSuite {
   test("multiple pipeline runs shouldn't load duplicated records") {
 
     val database = "tests_db"
-    val rawDataTableName = s"raw_duplicates_on_different_dates"
     val outputTableName = s"$database.test_duplicates_table"
 
     val config = initTestAppConfig(
       database = database,
-      rawDataTableName = rawDataTableName,
+      databasePath = s"/tmp/marioinc/$database/",
+      rawDataTableName = "raw_duplicates_on_different_dates",
       dataTableName = outputTableName,
     )
 
-    initRawData(rawDataTableName)
-    initOutputTable(outputTableName, config)
+    initMetastore(config)
 
     val logic = new DeviceDataLogic(session, config, LOCAL)
 
@@ -100,15 +94,15 @@ class DeviceDataPipelineSuite extends AnyFunSuite {
     result should contain theSameElementsAs result.toSet
   }
 
-  private def initOutputTable(outputTableName: String, config: AppConfig): Unit = {
+  private def initMetastore(config: AppConfig): Unit = {
     val createLogic = new CreateTablesLogic(session, config)
-    createLogic.createDataTable(true)
-    DeltaTable.forName(outputTableName).delete()
-  }
+    createLogic.createDatabase(session)
 
-  private def initRawData(rawDataTableName: String): Unit = {
+    createLogic.createDataTable(true)
+    DeltaTable.forName(config.dataTableName).delete()
+
     val rawInputDs = session.read.schema(rawSchema).json("src/test/resources/test_data/duplicates_on_different_dates")
-    rawInputDs.createOrReplaceTempView(rawDataTableName)
+    rawInputDs.createOrReplaceTempView(config.rawDataTableName)
   }
 
   private val rawSchema = StructType(Array(
