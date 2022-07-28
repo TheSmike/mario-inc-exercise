@@ -1,6 +1,7 @@
 package it.scarpenti.marioinc
 package pipeline.data
 
+import model.Device
 import utils.DateUtils.toLocalDate
 
 import io.delta.tables.DeltaTable
@@ -14,7 +15,7 @@ object DeviceDataPipeline extends SparkApp[DeviceDataContext] {
     val rawInputDs = readDfRawDataTable()
     val outputDeltaTable = readDeltaDataTable()
     new DeviceDataLogic(session, config.maxDelay).run(receivedDate, rawInputDs, outputDeltaTable)
-    optimizeOutputTable()
+    optimizeTableToReadingByDevice(context.profile)
   }
 
   private def readDfRawDataTable() = {
@@ -23,9 +24,14 @@ object DeviceDataPipeline extends SparkApp[DeviceDataContext] {
 
   private def readDeltaDataTable() = DeltaTable.forName(config.dataTableName)
 
-  def optimizeOutputTable(): Unit = {
-    //TODO: To effectively implement
-    //session.sql(s"OPTIMIZE ${config.dataTableName} ZORDER BY (${Device.DEVICE})")}
+  /**
+   * This specific delta table optimization allow to improve reading performance when filtering by device.
+   * It's disabled in the local environment because it works only on databricks. you shouldn't need it in local.
+   * @param profile
+   */
+  def optimizeTableToReadingByDevice(profile: String): Unit = {
+    if (profile != "local")
+      session.sql(s"OPTIMIZE ${config.dataTableName} ZORDER BY (${Device.DEVICE})")
   }
 
 }
