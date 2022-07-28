@@ -1,12 +1,6 @@
 package it.scarpenti.marioinc
 package pipeline.init
 
-import model.{Device, Info, RawDevice, Report}
-
-import io.delta.tables.DeltaTable
-import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.types._
-
 /**
  * This pipeline is used to create data tables in the data catalog the first time.
  * This operation could also be done by launching SQL scripts directly into SQL Engine system.

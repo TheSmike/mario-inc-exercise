@@ -1,6 +1,8 @@
 package it.scarpenti.marioinc
 package spark
 
+import utils.Profiles.LOCAL
+
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql.SparkSession
 
@@ -23,7 +25,7 @@ object SparkSessionFactory {
     setLog()
 
     val builder =
-      if (profile == "local") localBuilder()
+      if (profile == LOCAL) localBuilder()
       else genericBuilder()
 
     builder

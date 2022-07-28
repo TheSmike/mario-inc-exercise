@@ -119,7 +119,7 @@ columns.
 
 There is a sample of device and info data into the `src/test/resources/test_data/sample_data` folder. Each other folder
 in `src/test/resources/test_data/` should be used to a specific test case (like `duplicates_on_different_dates`).
-Consider using `SparkSessionFactory.getSession("local")` to make your own test. 
+Consider using `SparkSessionFactory.getSession(LOCAL)` to make your own test. 
 
 
 ## Example of usage
