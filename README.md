@@ -119,7 +119,7 @@ columns.
 
 There is a sample of device and info data into the `src/test/resources/test_data/sample_data` folder. Each other folder
 in `src/test/resources/test_data/` should be used to a specific test case (like `duplicates_on_different_dates`).
-Consider using `SparkSessionFactory.getSession("local")` to make your own test. 
+Consider using `SparkSessionFactory.getSession(LOCAL)` to make your own test. 
 
 
 ## Example of usage
@@ -143,6 +143,77 @@ s3://path-to-jar/mario-inc-exercise2.12-0.1.0.jar \
 --profile=staging \
 --received-date=2021-04-01
 ``` 
+
+### Launch pipelines locally
+If you want to launch a pipelines in local you can do it by the UI of Intellij (if you are using it), or you can launch 
+assembly and launch the jar from bash with the spark-submit command. Ensure you have installed Spark on your computer to
+launch the spark-submit command. Step to launch it:
+ - (Prerequisite) Install Spark locally
+ - Generate your own sample input data or copy it from `src/test/resources/test_data/sample_data` or use them directly.
+ Edit the two `landing-zone` parameters into the `application-local.conf` to point to the folder of the sample data.
+This last part could be improved handling the possibility to use an external config file, see the 
+[config lib doc](https://github.com/lightbend/config#merging-config-trees) for further details. 
+ - run sbt assembly on the project, this will generate a jar in the `target/scala.2.12` folder with the name 
+`mario-inc-exercise-assembly-{version}.jar`, i.e.: `mario-inc-exercise-assembly-1.1.0.jar`.
+ - run spark-submit with Delta Lake dependencies and the generated jar (below an example of the command for each pipeline)
+ - The first time launch the CreateTablesPipeline before all to generate the metastore with tables. This will generate 
+`metastore_db` folder and `derby.log` in the folder you run it.
+
+#### CreateTablesPipeline
+```shell
+spark-submit --packages io.delta:delta-core_2.12:2.0.0 \
+--conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" \
+--conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" \
+--deploy-mode client \
+--class it.scarpenti.marioinc.pipeline.init.CreateTablesPipeline \
+mario-inc-exercise-assembly-1.1.0.jar \
+--profile=local
+```
+
+#### DeviceInfoPipeline
+```shell
+spark-submit --packages io.delta:delta-core_2.12:2.0.0 \
+--conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" \
+--conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" \
+--deploy-mode client \
+--class it.scarpenti.marioinc.pipeline.info.DeviceInfoPipeline \
+mario-inc-exercise-assembly-1.1.0.jar \
+--profile=local
+```
+
+#### RawDeviceDataPipeline
+```shell
+spark-submit --packages io.delta:delta-core_2.12:2.0.0 \
+--conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" \
+--conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" \
+--deploy-mode client \
+--class it.scarpenti.marioinc.pipeline.rawdata.RawDeviceDataPipeline \
+mario-inc-exercise-assembly-1.1.0.jar \
+--profile=local --received-date=2021-04-01
+```
+
+#### DeviceDataPipeline
+```shell
+spark-submit --packages io.delta:delta-core_2.12:2.0.0 \
+--conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" \
+--conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" \
+--deploy-mode client \
+--class it.scarpenti.marioinc.pipeline.data.DeviceDataPipeline \
+mario-inc-exercise-assembly-1.1.0.jar \
+--profile=local --received-date=2021-04-01
+```
+
+#### ReportPipeline
+```shell
+spark-submit --packages io.delta:delta-core_2.12:2.0.0 \
+--conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" \
+--conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" \
+--deploy-mode client \
+--class it.scarpenti.marioinc.pipeline.report.ReportPipeline \
+mario-inc-exercise-assembly-1.1.0.jar \
+--profile=local --year-month-from=202104 --year-month-to=202104
+```
+
 
 ## CI / CD
 Below some notes about the CI/CD and repository settings:
@@ -169,16 +240,15 @@ Some other notes are reported below:
  - The force mode has been partially (slightly) introduced. In the final version force mode should allow rewriting data 
    generated with that specific run (drop data generated with the same input parameters and regenerate them).
  - It's a good practice to handle range of data as input of the pipeline, it's allow us calculating multiple partition
-   at a time and to facilitate possible backfill of data.
- - DeviceDataLogic is a bit different among other `*Logic` classes, it has been changed to allow integration tests on 
-   the pipeline, for the sake of simplicity and brevity of this exercise only this logic has been re factorized but also
-   the other logics should need refactoring. At this point we can start a discussion on how to isolate business logic 
-   respect config and if we prefer OOP respect to functional programming. Just to cite an example of pros and cons:
+   at a time and to facilitate possible backfill of data. 
+ - In this project I chose to create Logic classes (instead of objects), then with an internal status with inside 
+session and config. At this point we could start a discussion on how to isolate business logic respect config and if we 
+prefer OOP respect to functional programming. Just to cite an example of pros and cons:
    "avoid a lot of parameters as input of a method (OOP) vs make it clear who uses what (functional)"
  - All the tables in the pipelines has been read and write by name, obviously except landing zone files that don't have
    corresponding tables.
  - I had some issues with tests using Spark in different test classes, I try to make the Spark session a Singleton and
-   to set sbt to run tests sequentially, but it didn't work. I should spend time to investigate further to separate 
+   to set sbt to run tests sequentially, but it didn't work. I should spend more time to investigate further to separate 
    integration tests and unit tests.
  - Files size is an aspect that should be optimized perhaps
  - The selected partition strategy optimise reading of data by event date. To optimise reading also by device the
