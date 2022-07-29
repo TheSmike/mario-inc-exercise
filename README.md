@@ -154,7 +154,7 @@ launch the spark-submit command. Step to launch it:
 This last part could be improved handling the possibility to use an external config file, see the 
 [config lib doc](https://github.com/lightbend/config#merging-config-trees) for further details. 
  - run sbt assembly on the project, this will generate a jar in the `target/scala.2.12` folder with the name 
-`mario-inc-exercise-assembly-{version}.jar`, i.e.: `mario-inc-exercise-assembly-1.1.0-SNAPSHOT.jar`.
+`mario-inc-exercise-assembly-{version}.jar`, i.e.: `mario-inc-exercise-assembly-1.1.0.jar`.
  - run spark-submit with Delta Lake dependencies and the generated jar (below an example of the command for each pipeline)
  - The first time launch the CreateTablesPipeline before all to generate the metastore with tables. This will generate 
 `metastore_db` folder and `derby.log` in the folder you run it.
@@ -166,7 +166,7 @@ spark-submit --packages io.delta:delta-core_2.12:2.0.0 \
 --conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" \
 --deploy-mode client \
 --class it.scarpenti.marioinc.pipeline.init.CreateTablesPipeline \
-mario-inc-exercise-assembly-1.1.0-SNAPSHOT.jar \
+mario-inc-exercise-assembly-1.1.0.jar \
 --profile=local
 ```
 
@@ -177,7 +177,7 @@ spark-submit --packages io.delta:delta-core_2.12:2.0.0 \
 --conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" \
 --deploy-mode client \
 --class it.scarpenti.marioinc.pipeline.info.DeviceInfoPipeline \
-mario-inc-exercise-assembly-1.1.0-SNAPSHOT.jar \
+mario-inc-exercise-assembly-1.1.0.jar \
 --profile=local
 ```
 
@@ -188,7 +188,7 @@ spark-submit --packages io.delta:delta-core_2.12:2.0.0 \
 --conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" \
 --deploy-mode client \
 --class it.scarpenti.marioinc.pipeline.rawdata.RawDeviceDataPipeline \
-mario-inc-exercise-assembly-1.1.0-SNAPSHOT.jar \
+mario-inc-exercise-assembly-1.1.0.jar \
 --profile=local --received-date=2021-04-01
 ```
 
@@ -199,7 +199,7 @@ spark-submit --packages io.delta:delta-core_2.12:2.0.0 \
 --conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" \
 --deploy-mode client \
 --class it.scarpenti.marioinc.pipeline.data.DeviceDataPipeline \
-mario-inc-exercise-assembly-1.1.0-SNAPSHOT.jar \
+mario-inc-exercise-assembly-1.1.0.jar \
 --profile=local --received-date=2021-04-01
 ```
 
@@ -210,7 +210,7 @@ spark-submit --packages io.delta:delta-core_2.12:2.0.0 \
 --conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" \
 --deploy-mode client \
 --class it.scarpenti.marioinc.pipeline.report.ReportPipeline \
-mario-inc-exercise-assembly-1.1.0-SNAPSHOT.jar \
+mario-inc-exercise-assembly-1.1.0.jar \
 --profile=local --year-month-from=202104 --year-month-to=202104
 ```
 
